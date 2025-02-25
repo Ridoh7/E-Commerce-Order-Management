@@ -11,6 +11,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Data Transfer Object (DTO) for Order information.
+ * This class is used to transfer order-related data between different layers of the application.
+ * It includes fields for storing order details such as total price, order items, and creation timestamp.
+ */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -18,9 +23,23 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderDto {
 
+    /**
+     * Unique identifier for the order.
+     */
     private Long id;
-    private BigDecimal totalPrice;
-    private List<OrderItem> orderItemList;
-    private LocalDateTime createdAt;
 
+    /**
+     * Total price of the order.
+     */
+    private BigDecimal totalPrice;
+
+    /**
+     * List of items associated with the order.
+     */
+    private List<OrderItem> orderItemList;
+
+    /**
+     * Timestamp indicating when the order was created.
+     */
+    private LocalDateTime createdAt;
 }

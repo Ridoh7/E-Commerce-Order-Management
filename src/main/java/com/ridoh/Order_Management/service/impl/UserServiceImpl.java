@@ -22,6 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Implementation of the UserService interface, handling user authentication and management.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -33,15 +36,21 @@ public class UserServiceImpl implements UserService {
     private final EntityDtoMapper entityDtoMapper;
     private final EmailService emailService;
 
+    /**
+     * Registers a new user with the provided details.
+     * @param registrationRequest The user registration details.
+     * @return Response containing user registration status.
+     * @throws MessagingException If there is an error sending the welcome email.
+     */
     @Override
     public Response registerUser(UserDto registrationRequest) throws MessagingException {
         UserRole role = UserRole.USER;
 
-        if (registrationRequest.getRole() != null && registrationRequest.getRole().equalsIgnoreCase("admin")){
-            role =UserRole.ADMIN;
+        if (registrationRequest.getRole() != null && registrationRequest.getRole().equalsIgnoreCase("admin")) {
+            role = UserRole.ADMIN;
         }
         if (userRepo.existsByEmail(registrationRequest.getEmail())) {
-            throw new RuntimeException(registrationRequest.getEmail() + "Already Exists");
+            throw new RuntimeException(registrationRequest.getEmail() + " Already Exists");
         }
         User user = User.builder()
                 .name(registrationRequest.getName())
@@ -51,35 +60,40 @@ public class UserServiceImpl implements UserService {
                 .role(role)
                 .build();
 
-        User savedUser= userRepo.save(user);
+        User savedUser = userRepo.save(user);
+
         // Send welcome email
         try {
             String subject = "Welcome to Ridoh's E-Commerce Platform!";
             String body = "<h2>Dear " + registrationRequest.getName() + ",</h2>"
                     + "<p>Thank you for registering with us. We're excited to have you on board!</p>"
-                    + "<P>Kindly use the following email: " +registrationRequest.getEmail() +
-                    " and password: " +registrationRequest.getPassword() + " to login.</p>"
+                    + "<P>Kindly use the following email: " + registrationRequest.getEmail() +
+                    " and password: " + registrationRequest.getPassword() + " to login.</p>"
                     + "<p>Start exploring our amazing products and services now.</p>"
                     + "<p>Best regards,<br><b>Ridoh's E-Commerce Team</b></p>";
 
             emailService.sendEmail(registrationRequest.getEmail(), subject, body);
         } catch (MessagingException e) {
-            // Log the error instead of breaking the registration process
-            System.err.println("Failed to send welcome email: " + e.getMessage());
+            log.error("Failed to send welcome email: " + e.getMessage());
         }
 
         UserDto userDto = entityDtoMapper.mapUserToDtoBasic(savedUser);
         return Response.builder()
                 .status(200)
                 .message("User Successfully Added")
-                .user(userDto)
+                .data(userDto)
                 .build();
     }
 
+    /**
+     * Logs in a user and generates a JWT token.
+     * @param loginRequest The user's login credentials.
+     * @return Response containing login status and token.
+     */
     @Override
     public Response loginUser(LoginRequest loginRequest) {
-        User user =userRepo.findByEmail(loginRequest.getEmail()).orElseThrow(()->new NotFoundException("Email not found"));
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
+        User user = userRepo.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new NotFoundException("Email not found"));
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Password does not match");
         }
         String token = jwtUtils.generateToken(user);
@@ -92,37 +106,49 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    /**
+     * Retrieves a list of all registered users.
+     * @return Response containing the list of users.
+     */
     @Override
     public Response getAllUsers() {
         List<User> users = userRepo.findAll();
-        List<UserDto> userDtos=users.stream()
+        List<UserDto> userDtos = users.stream()
                 .map(entityDtoMapper::mapUserToDtoBasic)
                 .toList();
 
         return Response.builder()
                 .status(200)
                 .message("Users fetched successfully")
-                .userList(userDtos)
+                .data(userDtos)
                 .build();
     }
 
+    /**
+     * Retrieves the currently authenticated user.
+     * @return The logged-in user entity.
+     */
     @Override
     public User getLoginUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        log.info("user email is :" + email);
+        log.info("User email is: " + email);
 
-        return userRepo.findByEmail(email).orElseThrow(()->new UsernameNotFoundException("user not found"));
+        return userRepo.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
+    /**
+     * Retrieves user information along with order history.
+     * @return Response containing user details and order history.
+     */
     @Override
     public Response getUserInfoAndOrderHistory() {
-        User user= getLoginUser();
+        User user = getLoginUser();
         UserDto userDto = entityDtoMapper.mapUserToDtoPlusAddressAndOrderHistory(user);
 
         return Response.builder()
                 .status(200)
-                .user(userDto)
+                .data(userDto)
                 .build();
     }
 }

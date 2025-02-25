@@ -6,13 +6,20 @@ import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
+/**
+ * This class is responsible for mapping entity objects to their corresponding DTO (Data Transfer Object) representations.
+ * It helps in decoupling the domain model from the API layer by converting entities into lightweight DTOs.
+ */
 @Component
 public class EntityDtoMapper {
 
-
-    //user entity to user DTO
-
-    public UserDto mapUserToDtoBasic(User user){
+    /**
+     * Converts a {@link User} entity to a {@link UserDto} containing basic user details.
+     *
+     * @param user The {@link User} entity to be converted.
+     * @return A {@link UserDto} representation of the user.
+     */
+    public UserDto mapUserToDtoBasic(User user) {
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
         userDto.setPhoneNumber(user.getPhoneNumber());
@@ -20,11 +27,15 @@ public class EntityDtoMapper {
         userDto.setRole(user.getRole().name());
         userDto.setName(user.getName());
         return userDto;
-
     }
 
-    //Address to DTO Basic
-    public AddressDto mapAddressToDtoBasic(Address address){
+    /**
+     * Converts an {@link Address} entity to an {@link AddressDto} containing basic address details.
+     *
+     * @param address The {@link Address} entity to be converted.
+     * @return An {@link AddressDto} representation of the address.
+     */
+    public AddressDto mapAddressToDtoBasic(Address address) {
         AddressDto addressDto = new AddressDto();
         addressDto.setId(address.getId());
         addressDto.setCity(address.getCity());
@@ -35,17 +46,36 @@ public class EntityDtoMapper {
         return addressDto;
     }
 
-    //Category to DTO basic
-    public CategoryDto mapCategoryToDtoBasic(Category category){
+    /**
+     * Converts a {@link Category} entity to a {@link CategoryDto} containing basic category details.
+     * This includes the list of associated products.
+     *
+     * @param category The {@link Category} entity to be converted.
+     * @return A {@link CategoryDto} representation of the category.
+     */
+    public CategoryDto mapCategoryToDtoBasic(Category category) {
         CategoryDto categoryDto = new CategoryDto();
         categoryDto.setId(category.getId());
         categoryDto.setName(category.getName());
+
+        // Include the list of associated products
+        if (category.getProductList() != null) {
+            categoryDto.setProductList(category.getProductList()
+                    .stream()
+                    .map(this::mapProductToDtoBasic)
+                    .collect(Collectors.toList()));
+        }
+
         return categoryDto;
     }
 
-
-    //OrderItem to DTO Basics
-    public OrderItemDto mapOrderItemToDtoBasic(OrderItem orderItem){
+    /**
+     * Converts an {@link OrderItem} entity to an {@link OrderItemDto} containing basic order item details.
+     *
+     * @param orderItem The {@link OrderItem} entity to be converted.
+     * @return An {@link OrderItemDto} representation of the order item.
+     */
+    public OrderItemDto mapOrderItemToDtoBasic(OrderItem orderItem) {
         OrderItemDto orderItemDto = new OrderItemDto();
         orderItemDto.setId(orderItem.getId());
         orderItemDto.setQuantity(orderItem.getQuantity());
@@ -55,8 +85,13 @@ public class EntityDtoMapper {
         return orderItemDto;
     }
 
-    //Product to DTO Basic
-    public ProductDto mapProductToDtoBasic(Product product){
+    /**
+     * Converts a {@link Product} entity to a {@link ProductDto} containing basic product details.
+     *
+     * @param product The {@link Product} entity to be converted.
+     * @return A {@link ProductDto} representation of the product.
+     */
+    public ProductDto mapProductToDtoBasic(Product product) {
         ProductDto productDto = new ProductDto();
         productDto.setId(product.getId());
         productDto.setName(product.getName());
@@ -66,40 +101,63 @@ public class EntityDtoMapper {
         return productDto;
     }
 
-    public  UserDto mapUserToDtoPlusAddress(User user){
+    /**
+     * Converts a {@link User} entity to a {@link UserDto}, including address details.
+     *
+     * @param user The {@link User} entity to be converted.
+     * @return A {@link UserDto} representation including address details.
+     */
+    public UserDto mapUserToDtoPlusAddress(User user) {
         UserDto userDto = mapUserToDtoBasic(user);
-        if (user.getAddress() != null){
+        if (user.getAddress() != null) {
             AddressDto addressDto = mapAddressToDtoBasic(user.getAddress());
             userDto.setAddress(addressDto);
         }
-        return  userDto;
+        return userDto;
     }
 
-    //orderItem to DTO plus Product
-    public OrderItemDto mapOrderItemToDtoPlusProduct(OrderItem orderItem){
-        OrderItemDto orderItemDto =mapOrderItemToDtoBasic(orderItem);
+    /**
+     * Converts an {@link OrderItem} entity to an {@link OrderItemDto}, including product details.
+     *
+     * @param orderItem The {@link OrderItem} entity to be converted.
+     * @return An {@link OrderItemDto} representation including product details.
+     */
+    public OrderItemDto mapOrderItemToDtoPlusProduct(OrderItem orderItem) {
+        OrderItemDto orderItemDto = mapOrderItemToDtoBasic(orderItem);
 
-        if (orderItemDto.getProduct() != null){
+        if (orderItem.getProduct() != null) {
             ProductDto productDto = mapProductToDtoBasic(orderItem.getProduct());
             orderItemDto.setProduct(productDto);
         }
         return orderItemDto;
     }
-    // OrderItem to DTO plus product and User
-    public OrderItemDto mapOrderItemToDtoPlusProductAndUser(OrderItem orderItem){
+
+    /**
+     * Converts an {@link OrderItem} entity to an {@link OrderItemDto}, including product and user details.
+     *
+     * @param orderItem The {@link OrderItem} entity to be converted.
+     * @return An {@link OrderItemDto} representation including product and user details.
+     */
+    public OrderItemDto mapOrderItemToDtoPlusProductAndUser(OrderItem orderItem) {
         OrderItemDto orderItemDto = mapOrderItemToDtoPlusProduct(orderItem);
 
-        if (orderItem.getUser() != null){
+        if (orderItem.getUser() != null) {
             UserDto userDto = mapUserToDtoPlusAddress(orderItem.getUser());
             orderItemDto.setUser(userDto);
         }
         return orderItemDto;
     }
-    //User to Dto with Address and Order Item History
-    public UserDto mapUserToDtoPlusAddressAndOrderHistory(User user){
+
+    /**
+     * Converts a {@link User} entity to a {@link UserDto}, including address and order history.
+     *
+     * @param user The {@link User} entity to be converted.
+     * @return A {@link UserDto} representation including address and order history.
+     */
+    public UserDto mapUserToDtoPlusAddressAndOrderHistory(User user) {
         UserDto userDto = mapUserToDtoPlusAddress(user);
 
-        if (user.getOrderItemList() != null && !user.getOrderItemList().isEmpty()){
+        if (user.getOrderItemList() != null && !user.getOrderItemList().isEmpty()) {
             userDto.setOrderItemList(user.getOrderItemList()
                     .stream()
                     .map(this::mapOrderItemToDtoPlusProduct)
